@@ -1,14 +1,17 @@
 # cv2 collaborates with a NumPy library
 import cv2
 import time
+from emailing import send_email
 
 # 0 for laptop main camera and 1 for usb attached/secondary camera
 video = cv2.VideoCapture(0)
 time.sleep(1)
 
 first_frame = None
+status_list = []
 
 while True:
+	status = 0
 	check, frame = video.read()
 	# cvtColor() is used for color conversion.
 	# cvtColor(input_image, flag) where flag determines the type of conversion
@@ -35,7 +38,7 @@ while True:
 
 	# imshow is used to display an image in a window
 	# First arg is window name and second arg is the image
-	cv2.imshow("My video", dil_frame)
+	# cv2.imshow("My video", dil_frame)
 
 	contours, check = cv2.findContours(dil_frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -43,7 +46,15 @@ while True:
 		if cv2.contourArea(contour) < 5000:
 			continue
 		x, y, w, h = cv2.boundingRect(contour)
-		cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 3)
+		rectangle = cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 3)
+		if rectangle.any():
+			status = 1
+
+	status_list.append(status)
+	status_list = status_list[-2:]
+
+	if status_list[0] == 1 and status_list[1] == 0:
+		send_email()
 
 	cv2.imshow("Video", frame)
 	# waitKey function waits for specified milliseconds for any keyboard event
